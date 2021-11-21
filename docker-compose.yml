@@ -1,0 +1,53 @@
+version: "3"
+services:
+  elasticsearch:
+    image: elasticsearch:7.13.0
+    container_name: elasticsearch
+    volumes:
+      - /data/EFK/elasticsearch/data:/usr/share/elasticsearch/data
+      - /data/EFK/elasticsearch/plugins:/usr/share/elasticsearch/plugins
+      - /data/EFK/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    environment:
+      - ES_JAVA_OPTS=-Xmx4g -Xms2g
+      - discovery.type=single-node
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      efk_network:
+
+  kibana:
+    image: kibana:7.13.0
+    container_name: kibana
+    volumes:
+      - /data/EFK/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      #- SERVER_BASEPATH=/kadmin
+    ports:
+      - 5601:5601
+    depends_on: 
+      - elasticsearch
+    networks:
+      efk_network:
+
+  fluentd:
+    image: fluentd:1.1.1
+    container_name: fluentd
+    volumes:
+      - /data/EFK/fluentd/etc:/fluentd/etc
+    ports:
+      - 9880:9880
+      - 24224:24224
+      - 24224:24224/udp
+    depends_on: 
+      - elasticsearch
+    networks:
+      efk_network: 
+      
+networks:
+  efk_network:
+    external: true
+
+
+
